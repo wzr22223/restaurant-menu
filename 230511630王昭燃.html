@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>味享厨房 | 交互式餐厅菜单</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Poppins', 'Noto Sans', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f9f5f0 0%, #f0ebe4 100%);
+            color: #2e241f;
+            padding: 2rem 1.5rem;
+        }
+
+        /* 主容器 */
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255,255,245,0.6);
+            border-radius: 3rem;
+            backdrop-filter: blur(2px);
+            box-shadow: 0 25px 45px rgba(0,0,0,0.05);
+            padding: 2rem 1.5rem;
+        }
+
+        /* 头部 */
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #c57b3c, #9b4b2c);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .header p {
+            color: #6b4c3b;
+            font-weight: 500;
+            border-bottom: 2px dashed #e2c7b2;
+            display: inline-block;
+            padding-bottom: 0.3rem;
+        }
+
+        /* 两栏布局 */
+        .main-dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        /* 菜单区域 */
+        .menu-section {
+            flex: 3;
+            min-width: 260px;
+        }
+
+        /* 分类选项卡 */
+        .category-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #eedbcb;
+            padding-bottom: 1rem;
+        }
+        .cat-btn {
+            background: #fff6ef;
+            border: none;
+            padding: 0.7rem 1.8rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 60px;
+            color: #7b4a2e;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .cat-btn.active {
+            background: #c57b3c;
+            color: white;
+            box-shadow: 0 8px 18px rgba(197,123,60,0.25);
+            transform: scale(1.02);
+        }
+        .cat-btn:hover:not(.active) {
+            background: #e9d9cd;
+            transform: translateY(-2px);
+        }
+
+        /* 菜品网格 */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.8rem;
+        }
+
+        /* 菜品卡片 + 悬停动画效果 */
+        .dish-card {
+            background: white;
+            border-radius: 1.8rem;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            box-shadow: 0 12px 24px -12px rgba(0,0,0,0.1);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+        /* 悬停动画：上浮 + 阴影增强 + 图片缩放 */
+        .dish-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 28px 32px -14px rgba(0,0,0,0.2);
+        }
+        .card-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+            display: block;
+        }
+        .dish-card:hover .card-img {
+            transform: scale(1.04);
+        }
+        .img-wrapper {
+            overflow: hidden;
+            position: relative;
+        }
+        .card-content {
+            padding: 1rem 1.2rem 1.2rem;
+        }
+        .dish-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+        }
+        .dish-price {
+            color: #c57b3c;
+            font-weight: 800;
+            font-size: 1.25rem;
+        }
+        .dish-desc {
+            font-size: 0.85rem;
+            color: #8b6f5c;
+            margin: 0.5rem 0 1rem 0;
+            line-height: 1.4;
+        }
+        .add-btn {
+            background: #2e241f;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.6rem 0;
+            width: 100%;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .add-btn:hover {
+            background: #c57b3c;
+            transform: scale(0.97);
+        }
+
+        /* 购物车区域 */
+        .cart-section {
+            flex: 1.2;
+            min-width: 280px;
+            background: #ffffffdb;
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 1.5rem;
+            border: 1px solid #fff3e8;
+        }
+        .cart-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            border-left: 5px solid #c57b3c;
+            padding-left: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+        .cart-list {
+            max-height: 380px;
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+            padding-right: 0.3rem;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fef7f0;
+            margin-bottom: 0.7rem;
+            padding: 0.6rem 0.8rem;
+            border-radius: 1.2rem;
+        }
+        .cart-item-info {
+            flex: 2;
+        }
+        .cart-item-name {
+            font-weight: 600;
+        }
+        .cart-item-price {
+            font-size: 0.8rem;
+            color: #a16238;
+        }
+        .cart-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .cart-qty {
+            font-weight: 700;
+            min-width: 28px;
+            text-align: center;
+        }
+        .cart-btn {
+            background: #e7ddd2;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+        .cart-btn.remove {
+            background: #f3cfc2;
+            color: #b1431c;
+        }
+        .cart-btn:hover {
+            background: #c57b3c;
+            color: white;
+        }
+        .empty-cart {
+            text-align: center;
+            padding: 2rem 0;
+            color: #baa28e;
+            font-style: italic;
+        }
+        .cart-summary {
+            border-top: 2px dashed #e9cfbb;
+            padding-top: 1rem;
+            margin-top: 0.5rem;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 800;
+            font-size: 1.3rem;
+            margin: 0.8rem 0;
+        }
+        .checkout-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+        .checkout-form input {
+            padding: 0.8rem 1rem;
+            border: 1px solid #eedbcb;
+            border-radius: 60px;
+            background: white;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .checkout-form input:focus {
+            border-color: #c57b3c;
+            box-shadow: 0 0 0 2px rgba(197,123,60,0.2);
+        }
+        .submit-order {
+            background: #c57b3c;
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .submit-order:hover {
+            background: #9b4b2c;
+            transform: scale(0.98);
+        }
+        .clear-cart {
+            background: transparent;
+            border: 1px solid #cfb7a4;
+            padding: 0.5rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            color: #7b5a45;
+            cursor: pointer;
+        }
+        .clear-cart:hover {
+            background: #f3e1d4;
+        }
+        footer {
+            text-align: center;
+            margin-top: 2.5rem;
+            font-size: 0.8rem;
+            color: #b3927c;
+        }
+
+        @media (max-width: 820px) {
+            body { padding: 1rem; }
+            .cart-section { position: relative; top: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="header">
+        <h1>🍜 味享厨房 · 交互式菜单</h1>
+        <p>甄选美味 | 现点现做 | 舌尖盛宴</p>
+    </div>
+
+    <div class="main-dashboard">
+        <div class="menu-section">
+            <div class="category-tabs" id="categoryTabs"></div>
+            <div class="menu-grid" id="menuGrid"></div>
+        </div>
+
+        <div class="cart-section">
+            <div class="cart-title">🛒 我的点单</div>
+            <div id="cartItemsList" class="cart-list">
+                <div class="empty-cart">✨ 购物车还是空的，点几道菜吧</div>
+            </div>
+            <div class="cart-summary">
+                <div class="total-row">
+                    <span>合计金额</span>
+                    <span id="cartTotalPrice">¥0.00</span>
+                </div>
+                <div class="checkout-form">
+                    <input type="text" id="customerName" placeholder="👤 您的姓名 / 桌号" autocomplete="off">
+                    <input type="text" id="customerPhone" placeholder="📞 联系电话 (选填)">
+                    <button id="submitOrderBtn" class="submit-order">📋 确认下单</button>
+                    <button id="clearCartBtn" class="clear-cart">🗑️ 清空购物车</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer>✨ 悬停卡片有惊喜动画 | 实时价格计算 | 模拟提交订单弹窗确认</footer>
+</div>
+
+<script>
+    // ========== 菜品数据（精简为6道菜）==========
+    const MENU_DATA = [
+        { id: 1, name: "🍲 招牌酸菜鱼", desc: "鲜嫩黑鱼片 + 老坛酸菜，酸辣开胃", price: 68, category: "招牌主菜", img: "images/suan-cai-yu.jpg" },
+        { id: 2, name: "🦐 蒜蓉粉丝虾", desc: "开背鲜虾铺蒜蓉，粉丝吸饱汤汁", price: 59, category: "海鲜精选", img: "images/fen-si-xia.jpg" },
+        { id: 3, name: "🥩 秘制红烧肉", desc: "入口即化，浓油赤酱配饭一绝", price: 52, category: "招牌主菜", img: "images/hong-shao-rou.jpg" },
+        { id: 4, name: "🥬 白灼芥兰", desc: "清爽脆嫩，佐餐解腻", price: 22, category: "时令鲜蔬", img: "images/bai-zhuo-jie-lan.jpg" },
+        { id: 5, name: "🍚 海鲜炒饭", desc: "虾仁鱿鱼粒，粒粒分明", price: 38, category: "主食/饭面", img: "images/hai-xian-chao-fan.jpg" },
+        { id: 6, name: "🍜 牛肉刀削面", desc: "大块牛肉手工面，汤浓味美", price: 35, category: "主食/饭面", img: "images/niu-rou-dao-xiao-mian.jpg" }
+    ];
+
+    // 获取分类（自动去重）
+    const getCategories = () => {
+        const cats = [...new Set(MENU_DATA.map(item => item.category))];
+        const orderMap = { "招牌主菜":1, "海鲜精选":2, "时令鲜蔬":3, "主食/饭面":4 };
+        return cats.sort((a,b) => (orderMap[a] || 99) - (orderMap[b] || 99));
+    };
+
+    // 购物车状态
+    let cart = new Map();
+
+    // 更新所有UI
+    function updateAllUI() {
+        renderCartList();
+        updateTotalPrice();
+        const activeCat = document.querySelector('.cat-btn.active')?.getAttribute('data-cat') || getCategories()[0];
+        renderMenuByCategory(activeCat);
+    }
+
+    function computeTotal() {
+        let total = 0;
+        for (let item of cart.values()) {
+            total += item.price * item.quantity;
+        }
+        return total;
+    }
+
+    function updateTotalPrice() {
+        const totalEl = document.getElementById('cartTotalPrice');
+        if (totalEl) totalEl.innerText = `¥${computeTotal().toFixed(2)}`;
+    }
+
+    // 渲染购物车
+    function renderCartList() {
+        const container = document.getElementById('cartItemsList');
+        if (!container) return;
+        if (cart.size === 0) {
+            container.innerHTML = '<div class="empty-cart">✨ 购物车还是空的，点几道菜吧</div>';
+            return;
+        }
+        let html = '';
+        for (let item of cart.values()) {
+            html += `
+                <div class="cart-item" data-id="${item.id}">
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-price">¥${item.price}</div>
+                    </div>
+                    <div class="cart-item-actions">
+                        <button class="cart-btn decr-btn" data-id="${item.id}">−</button>
+                        <span class="cart-qty">${item.quantity}</span>
+                        <button class="cart-btn incr-btn" data-id="${item.id}">+</button>
+                        <button class="cart-btn remove" data-id="${item.id}">✕</button>
+                    </div>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+
+        container.querySelectorAll('.incr-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = parseInt(btn.getAttribute('data-id'));
+                addToCartById(id, 1);
+            });
+        });
+        container.querySelectorAll('.decr-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = parseInt(btn.getAttribute('data-id'));
+                changeQuantity(id, -1);
+            });
+        });
+        container.querySelectorAll('.remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = parseInt(btn.getAttribute('data-id'));
+                removeItemCompletely(id);
+            });
+        });
+    }
+
+    function addToCartById(id, increment = 1) {
+        const dish = MENU_DATA.find(d => d.id === id);
+        if (!dish) return;
+        if (cart.has(id)) {
+            const existing = cart.get(id);
+            existing.quantity += increment;
+            if (existing.quantity <= 0) {
+                cart.delete(id);
+            } else {
+                cart.set(id, existing);
+            }
+        } else {
+            if (increment > 0) {
+                cart.set(id, { id: dish.id, name: dish.name, price: dish.price, quantity: 1 });
+            }
+        }
+        updateAllUI();
+    }
+
+    function changeQuantity(id, delta) {
+        if (!cart.has(id)) return;
+        const item = cart.get(id);
+        const newQty = item.quantity + delta;
+        if (newQty <= 0) {
+            cart.delete(id);
+        } else {
+            item.quantity = newQty;
+            cart.set(id, item);
+        }
+        updateAllUI();
+    }
+
+    function removeItemCompletely(id) {
+        if (cart.has(id)) {
+            cart.delete(id);
+            updateAllUI();
+        }
+    }
+
+    function clearCart() {
+        if (cart.size > 0) {
+            cart.clear();
+            updateAllUI();
+        } else {
+            alert("购物车已经是空的～");
+        }
+    }
+
+    // 渲染菜单
+    function renderMenuByCategory(category) {
+        const grid = document.getElementById('menuGrid');
+        if (!grid) return;
+        const filtered = MENU_DATA.filter(item => item.category === category);
+        if (filtered.length === 0) {
+            grid.innerHTML = '<div style="grid-column:1/-1; text-align:center">暂无该分类菜品</div>';
+            return;
+        }
+        let cardsHtml = '';
+        filtered.forEach(dish => {
+            cardsHtml += `
+                <div class="dish-card" data-id="${dish.id}">
+                    <div class="img-wrapper">
+                        <img class="card-img" src="${dish.img}" alt="${dish.name}" loading="lazy" onerror="this.src='https://picsum.photos/id/20/400/300'">
+                    </div>
+                    <div class="card-content">
+                        <div class="dish-title">
+                            <span>${dish.name}</span>
+                            <span class="dish-price">¥${dish.price}</span>
+                        </div>
+                        <div class="dish-desc">${dish.desc}</div>
+                        <button class="add-btn" data-id="${dish.id}">➕ 加入购物车</button>
+                    </div>
+                </div>
+            `;
+        });
+        grid.innerHTML = cardsHtml;
+
+        document.querySelectorAll('.add-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const dishId = parseInt(btn.getAttribute('data-id'));
+                addToCartById(dishId, 1);
+                btn.textContent = '✓ 已添加';
+                setTimeout(() => {
+                    if (btn) btn.textContent = '➕ 加入购物车';
+                }, 600);
+            });
+        });
+    }
+
+    // 渲染分类选项卡
+    function renderCategories() {
+        const cats = getCategories();
+        const container = document.getElementById('categoryTabs');
+        if (!container) return;
+        let btnsHtml = '';
+        cats.forEach((cat, idx) => {
+            const activeClass = idx === 0 ? 'active' : '';
+            btnsHtml += `<button class="cat-btn ${activeClass}" data-cat="${cat}">${cat}</button>`;
+        });
+        container.innerHTML = btnsHtml;
+
+        document.querySelectorAll('.cat-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const selectedCat = btn.getAttribute('data-cat');
+                document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderMenuByCategory(selectedCat);
+            });
+        });
+    }
+
+    // 订单提交
+    function submitOrder() {
+        const customerNameInput = document.getElementById('customerName');
+        const customerPhoneInput = document.getElementById('customerPhone');
+        const customerName = customerNameInput.value.trim();
+        const phone = customerPhoneInput.value.trim();
+
+        if (cart.size === 0) {
+            alert("🛎️ 您的购物车还是空的！请先添加一些美味吧～");
+            return;
+        }
+
+        if (customerName === "") {
+            alert("📝 请填写您的姓名或桌号以便后厨上菜 :)");
+            return;
+        }
+
+        let orderDetails = "";
+        let total = computeTotal();
+        for (let item of cart.values()) {
+            orderDetails += `${item.name} x ${item.quantity}  ￥${(item.price * item.quantity).toFixed(2)}\n`;
+        }
+        const confirmMsg = `🍽️ 订单确认\n\n👤 顾客：${customerName}\n📞 ${phone || "未填写"}\n\n菜品明细：\n${orderDetails}\n————————————\n💰 总计：¥${total.toFixed(2)}\n\n是否确认下单？`;
+        const isConfirmed = confirm(confirmMsg);
+        if (isConfirmed) {
+            alert(`✅ 订单已成功提交！\n厨房正在热火朝天制作中，请稍后享用美味～\n感谢光临 ${customerName} ！`);
+            cart.clear();
+            customerNameInput.value = "";
+            customerPhoneInput.value = "";
+            updateAllUI();
+        }
+    }
+
+    // 初始化
+    function init() {
+        renderCategories();
+        const defaultCat = getCategories()[0];
+        renderMenuByCategory(defaultCat);
+        renderCartList();
+        updateTotalPrice();
+
+        const submitBtn = document.getElementById('submitOrderBtn');
+        if (submitBtn) submitBtn.addEventListener('click', submitOrder);
+
+        const clearCartBtn = document.getElementById('clearCartBtn');
+        if (clearCartBtn) clearCartBtn.addEventListener('click', () => {
+            if (cart.size > 0) {
+                if (confirm("确定要清空购物车中的所有菜品吗？")) {
+                    clearCart();
+                }
+            } else {
+                alert("购物车已空，无须清空～");
+            }
+        });
+    }
+
+    init();
+</script>
+</body>
+</html>
